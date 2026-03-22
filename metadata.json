@@ -1,0 +1,5 @@
+{
+  "name": "Watchit",
+  "description": "Full-stack streaming UI with Express + Vite + React. Uses Stremio-style addons (Torrentio), Firebase auth, and optional Gemini on the server.",
+  "requestFramePermissions": []
+}

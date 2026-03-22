@@ -1,0 +1,63 @@
+{
+  "entities": {
+    "profiles": {
+      "title": "User Profile",
+      "description": "A user profile within an account.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "avatar": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "name", "avatar"]
+    },
+    "favorites": {
+      "title": "Favorite Content",
+      "description": "A movie or show favorited by a profile.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "profileId": { "type": "string" },
+        "contentId": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["movie", "show", "anime"] },
+        "posterUrl": { "type": "string" },
+        "addedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "profileId", "contentId", "title", "type", "posterUrl"]
+    },
+    "history": {
+      "title": "Watch History",
+      "description": "Tracking progress for 'Continue Watching'.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "profileId": { "type": "string" },
+        "contentId": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["movie", "show", "anime"] },
+        "posterUrl": { "type": "string" },
+        "progress": { "type": "number", "description": "Progress in seconds" },
+        "duration": { "type": "number", "description": "Total duration in seconds" },
+        "lastWatched": { "type": "string", "format": "date-time" },
+        "isFinished": { "type": "boolean" }
+      },
+      "required": ["userId", "profileId", "contentId", "title", "type", "progress", "duration"]
+    }
+  },
+  "firestore": {
+    "/profiles/{profileId}": {
+      "schema": "profiles",
+      "description": "User profiles"
+    },
+    "/favorites/{favoriteId}": {
+      "schema": "favorites",
+      "description": "User favorites"
+    },
+    "/history/{historyId}": {
+      "schema": "history",
+      "description": "Watch history"
+    }
+  }
+}

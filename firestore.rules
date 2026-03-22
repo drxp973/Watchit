@@ -1,0 +1,124 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: profiles
+// Document ID: profileId
+// Fields:
+//   - userId: string (required)
+//   - name: string (required)
+//   - avatar: string (required)
+//   - createdAt: string (optional, ISO 8601)
+//
+// Collection: favorites
+// Document ID: favoriteId (profileId_contentId)
+// Fields:
+//   - userId: string (required)
+//   - profileId: string (required)
+//   - contentId: string (required)
+//   - title: string (required)
+//   - type: string (required, enum: ["movie", "show", "anime"])
+//   - posterUrl: string (required)
+//   - addedAt: string (optional, ISO 8601)
+//
+// Collection: history
+// Document ID: historyId (profileId_contentId)
+// Fields:
+//   - userId: string (required)
+//   - profileId: string (required)
+//   - contentId: string (required)
+//   - title: string (required)
+//   - type: string (required, enum: ["movie", "show", "anime"])
+//   - posterUrl: string (required)
+//   - progress: number (required)
+//   - duration: number (required)
+//   - lastWatched: string (optional, ISO 8601)
+//   - isFinished: boolean (optional)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function hasRequiredFields(fields) {
+      return request.resource.data.keys().hasAll(fields);
+    }
+
+    function hasOnlyAllowedFields(fields) {
+      return request.resource.data.keys().hasOnly(fields);
+    }
+
+    function isValidProfile(data) {
+      return hasOnlyAllowedFields(['userId', 'name', 'avatar', 'createdAt']) &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 50 &&
+             data.avatar is string && data.avatar.size() > 0 && data.avatar.size() < 500 &&
+             (!('createdAt' in data) || (data.createdAt is string && data.createdAt.size() < 50));
+    }
+
+    function isValidFavorite(data) {
+      return hasOnlyAllowedFields(['userId', 'profileId', 'contentId', 'title', 'type', 'posterUrl', 'addedAt']) &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.profileId is string && data.profileId.size() > 0 &&
+             data.contentId is string && data.contentId.size() > 0 &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.type in ['movie', 'show', 'anime'] &&
+             data.posterUrl is string && data.posterUrl.size() > 0 && data.posterUrl.size() < 500 &&
+             (!('addedAt' in data) || (data.addedAt is string && data.addedAt.size() < 50));
+    }
+
+    function isValidHistory(data) {
+      return hasOnlyAllowedFields(['userId', 'profileId', 'contentId', 'title', 'type', 'posterUrl', 'progress', 'duration', 'lastWatched', 'isFinished']) &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.profileId is string && data.profileId.size() > 0 &&
+             data.contentId is string && data.contentId.size() > 0 &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.type in ['movie', 'show', 'anime'] &&
+             data.posterUrl is string && data.posterUrl.size() > 0 && data.posterUrl.size() < 500 &&
+             data.progress is number && data.duration is number &&
+             data.progress >= 0 && data.duration > 0 &&
+             (!('isFinished' in data) || data.isFinished is bool) &&
+             (!('lastWatched' in data) || (data.lastWatched is string && data.lastWatched.size() < 50));
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "michaelgrullon1504@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /profiles/{profileId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create, update: if isAuthenticated() && isValidProfile(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    match /favorites/{favoriteId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create, update: if isAuthenticated() && isValidFavorite(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+
+    match /history/{historyId} {
+      allow read: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create, update: if isAuthenticated() && isValidHistory(request.resource.data);
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
+    }
+  }
+}

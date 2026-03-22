@@ -1,0 +1,10 @@
+{
+  "name": "Watchit",
+  "short_name": "Watchit",
+  "description": "Movies, series, and anime with addon-powered playback.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#0ea5e9",
+  "orientation": "any"
+}
